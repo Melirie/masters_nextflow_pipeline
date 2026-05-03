@@ -21,13 +21,15 @@ import seaborn as sns
 
 adata = sc.read_h5ad('${input_file}')
 
-# 3. Identify samples that have 200 or more cells
+sample_counts = adata.obs['sampleID'].value_counts()
+
+# Identify samples that have 200 or more cells
 keep_samples = sample_counts[sample_counts >= 200].index
 
-# 4. Subset the adata to only include those samples
+# Subset the adata to only include those samples
 adata = adata[adata.obs['sampleID'].isin(keep_samples)].copy()
 
-# Optional: Print how many samples were removed
+# Print how many samples were removed
 removed = len(sample_counts) - len(keep_samples)
 print(f"Removed {removed} samples with less than 200 cells.")
 print(f"Remaining cells: {adata.n_obs}")
