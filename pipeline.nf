@@ -23,7 +23,7 @@ include { preprocessing } from './modules/preprocessing.nf'
 include { normalization; pca; neighbors; umap } from './modules/standard_sc_workflow.nf'
 include { qc_plot } from './modules/QC_plot.nf'
 include { subsetting_2 } from './modules/subsetting_2.nf'
-// include { sample_qc } from './modules/sample_qc.nf'
+include { sample_qc } from './modules/sample_qc.nf'
 include { scvi } from './modules/scvi.nf'
 include { mrvi } from './modules/mrVI.nf'
 // include { kbet; }
@@ -46,11 +46,11 @@ workflow {
     neighbors(pca.out, 'adata_subset_neighbors.h5ad')
     umap(neighbors.out, 'umap_unintegrated.pdf','adata_clean.h5ad')
     subsetting_2(umap.out.h5ad, params.cell_type, "adata_${params.cell_type}.h5ad")
-    // sample_qc(subsetting_2.out, "adata_${params.cell_type}_clean.h5ad")
+    sample_qc(subsetting_2.out, "adata_${params.cell_type}_clean.h5ad")
     // output_array = [subsetting_2.out, umap.out]
     // output_ch = channel.of(output_array)
-    scvi(subsetting_2.out, params.batch, "scvi_model_${params.cell_type}")
-    mrvi(subsetting_2.out, params.batch, params.cov_of_interest, "mrvi_model_${params.cell_type}")
+    scvi(sample_qc.out, params.batch, "scvi_model_${params.cell_type}")
+    mrvi(sample_qc.out, params.batch, params.cov_of_interest, "mrvi_model_${params.cell_type}")
     umap_after_batch_cor(mrvi.out, subsetting_2.out, 'adata_mrvi.h5ad')
     // basis_array = ['unintegrated', 'scvi', 'mrvi']
     umap_plot(umap_after_batch_cor.out, 'mrvi', "mrvi_umap.pdf") // add basis_array here

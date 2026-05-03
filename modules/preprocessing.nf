@@ -23,10 +23,6 @@ from pandas.api.types import CategoricalDtype
 
 adata = sc.read_h5ad("${input_file}")
 
-# 6. Quality Control Filtering
-counts = adata.obs['sampleID'].value_counts()
-adata = adata[adata.obs['sampleID'].isin(counts[counts >= 200].index)].copy()
-
 # Raw counts handling
 adata.layers["counts"] = adata.raw.X.copy()
 adata.X = adata.raw[:, adata.var_names].X.copy()

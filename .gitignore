@@ -1,0 +1,26 @@
+# 1. Ignore everything by default
+*
+
+# 2. But do NOT ignore these specific files
+!pipeline.nf
+!nextflow.config
+!human_intestinal.yml
+!.gitignore
+
+# 3. Do NOT ignore the modules directory and its contents
+!modules/
+!modules/**
+
+# 4. Do NOT ignore the plots inside results
+!results/
+!results/plots/
+!results/plots/**
+
+# 4. Specifically ensure heavy/system stuff stays ignored 
+# (Even if they accidentally match an exception above)
+work/
+.nextflow/
+.nextflow.log*
+bin/python
+*.h5ad
+*.nc
