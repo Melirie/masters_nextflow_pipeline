@@ -6,6 +6,8 @@
 !nextflow.config
 !human_intestinal.yml
 !.gitignore
+!latest_execution_report.html
+!pipeline_overview.html
 
 # 3. Do NOT ignore the modules directory and its contents
 !modules/

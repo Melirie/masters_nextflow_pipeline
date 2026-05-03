@@ -19,6 +19,8 @@ import scanpy as sc
 adata = sc.read_h5ad('${input_file}')
 
 adata = adata[adata.obs["level_1_annot"]=='${cell_type}'].copy()
+adata = adata[adata.obs["organ_groups"]=='Large_intestine'].copy()
+
 
 sample_counts = adata.obs['sampleID'].value_counts()
 
