@@ -73,8 +73,7 @@ de_results = model_mrvi.differential_expression(
 
 
 # Save the xarray Dataset
-de_results.to_netcdf("${output_file}")
-
+de_results.to_netcdf("${output_file}", engine="netcdf4")
 
 
 

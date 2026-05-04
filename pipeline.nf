@@ -51,9 +51,11 @@ workflow {
     // output_ch = channel.of(output_array)
     scvi(sample_qc.out, params.batch, "scvi_model_${params.cell_type}")
     mrvi(sample_qc.out, params.batch, params.cov_of_interest, "mrvi_model_${params.cell_type}")
-    umap_after_batch_cor(mrvi.out, subsetting_2.out, 'adata_mrvi.h5ad')
-    // basis_array = ['unintegrated', 'scvi', 'mrvi']
-    umap_plot(umap_after_batch_cor.out, 'mrvi', "mrvi_umap.pdf") // add basis_array here
+    bases_array = ['unintegrated', 'scvi', 'mrvi_u', 'mrvi_z']
+    umap_after_batch_cor(mrvi.out, scvi.out, subsetting_2.out, "adata_all_batch_${params.cell_type}.h5ad")
+    bases_ch = channel.of('unintegrated', 'scvi', 'mrvi_u', 'mrvi_z').view()
+    plot_inputs = umap_after_batch_cor.out.combine(bases_ch)
+    umap_plot(plot_inputs)
     differential_abundance_calc(mrvi.out, umap_after_batch_cor.out, params.comparison_key, "da_${params.cell_type}.nc")
     differential_abundance_plot(mrvi.out, umap_after_batch_cor.out, differential_abundance_calc.out, params.comparison_key, "da_${params.cell_type}.pdf")
     differential_expression_calc(mrvi.out, umap_after_batch_cor.out, params.comparison_key, "deg_${params.cell_type}.nc")

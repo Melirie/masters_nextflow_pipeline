@@ -1,6 +1,7 @@
 process umap_after_batch_cor {
     input:
-    path input_model
+    path input_model_mrvi
+    path input_model_scvi
     path input_adata
     val output_file
 
@@ -12,41 +13,41 @@ process umap_after_batch_cor {
     python3 <<-END_PYTHON
 
 import scanpy as sc
+import scvi
 from scvi.external import MRVI
 
 # 1. Load Data and Model
 adata = sc.read_h5ad("${input_adata}")
-model = MRVI.load("${input_model}", adata=adata)
 
-# 2. Process the single model
-label = "mrvi"
-print(f"Processing Model {label}...")
+# Unintegrated PCA, neighbors, UMAP
 
-# --- Latent Extraction ---
-print("Getting latent representations...")
-# u = sample-level (uncorrected), z = latent (corrected)
-adata.obsm[f"X_{label}_u"] = model.get_latent_representation()
-adata.obsm[f"X_{label}_z"] = model.get_latent_representation(give_z=True)
+sc.tl.pca(adata)
+sc.pp.neighbors(adata, use_rep="X_pca", key_added="unintegrated")
+sc.tl.umap(adata, neighbors_key="unintegrated")
+adata.obsm["X_umap_unintegrated"] = adata.obsm["X_umap"].copy()
+del adata.obsm["X_umap"]
 
-# --- Neighbors & UMAP for 'u' ---
-print("Computing neighbors and UMAP for u...")
-sc.pp.neighbors(adata, use_rep=f"X_{label}_u", key_added=f"neighbors_{label}_u")
-sc.tl.umap(adata, neighbors_key=f"neighbors_{label}_u")
-adata.obsm[f"X_umap_{label}_u"] = adata.obsm["X_umap"].copy()
+model_scvi = scvi.model.SCVI.load("${input_model_scvi}", adata=adata)
+adata.obsm["X_scvi"] = model_scvi.get_latent_representation()
+sc.pp.neighbors(adata, use_rep="X_scvi", key_added="neighbors_scvi")
+sc.tl.umap(adata, neighbors_key="neighbors_scvi")
+adata.obsm["X_umap_scvi"] = adata.obsm["X_umap"].copy()
+del adata.obsm["X_umap"]
 
-# --- Neighbors & UMAP for 'z' ---
-print("Computing neighbors and UMAP for z...")
-sc.pp.neighbors(adata, use_rep=f"X_{label}_z", key_added=f"neighbors_{label}_z")
-sc.tl.umap(adata, neighbors_key=f"neighbors_{label}_z")
-adata.obsm[f"X_umap_{label}_z"] = adata.obsm["X_umap"].copy()
-
-# Cleanup default UMAP slot to avoid downstream mixups
-if "X_umap" in adata.obsm:
-    del adata.obsm["X_umap"]
+model_mrvi = MRVI.load("${input_model_mrvi}", adata=adata)
+adata.obsm[f"X_mrvi_u"] = model_mrvi.get_latent_representation()
+adata.obsm[f"X_mrvi_z"] = model_mrvi.get_latent_representation(give_z=True)
+sc.pp.neighbors(adata, use_rep=f"X_mrvi_u", key_added=f"neighbors_mrvi_u")
+sc.tl.umap(adata, neighbors_key=f"neighbors_mrvi_u")
+adata.obsm[f"X_umap_mrvi_u"] = adata.obsm["X_umap"].copy()
+del adata.obsm["X_umap"]
+sc.pp.neighbors(adata, use_rep=f"X_mrvi_z", key_added=f"neighbors_mrvi_z")
+sc.tl.umap(adata, neighbors_key=f"neighbors_mrvi_z")
+adata.obsm[f"X_umap_mrvi_z"] = adata.obsm["X_umap"].copy()
+del adata.obsm["X_umap"]
 
 # 3. Save Output
 adata.write_h5ad("${output_file}")
-
 
 END_PYTHON
     """
