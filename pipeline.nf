@@ -49,14 +49,14 @@ workflow {
     sample_qc(subsetting_2.out, "adata_${params.cell_type}_clean.h5ad")
     // output_array = [subsetting_2.out, umap.out]
     // output_ch = channel.of(output_array)
-    // scvi(sample_qc.out, params.batch, "scvi_model_${params.cell_type}")
+    scvi(sample_qc.out, params.batch, "scvi_model_${params.cell_type}")
     mrvi(sample_qc.out, params.batch, params.cov_of_interest, "mrvi_model_${params.cell_type}")
     umap_after_batch_cor(mrvi.out, subsetting_2.out, 'adata_mrvi.h5ad')
     // basis_array = ['unintegrated', 'scvi', 'mrvi']
     umap_plot(umap_after_batch_cor.out, 'mrvi', "mrvi_umap.pdf") // add basis_array here
-    // differential_abundance_calc(mrvi.out, umap_after_batch_cor.out, params.comparison_key, "da_${params.cell_type}.nc")
-    // differential_abundance_plot(mrvi.out, umap_after_batch_cor.out, differential_abundance_calc.out, params.comparison_key, "da_${params.cell_type}.pdf")
-    // differential_expression_calc(mrvi.out, umap_after_batch_cor.out, params.comparison_key, "deg_${params.cell_type}.nc")
+    differential_abundance_calc(mrvi.out, umap_after_batch_cor.out, params.comparison_key, "da_${params.cell_type}.nc")
+    differential_abundance_plot(mrvi.out, umap_after_batch_cor.out, differential_abundance_calc.out, params.comparison_key, "da_${params.cell_type}.pdf")
+    differential_expression_calc(mrvi.out, umap_after_batch_cor.out, params.comparison_key, "deg_${params.cell_type}.nc")
 
     publish:
     loaded_data = load_data.out
@@ -69,13 +69,13 @@ workflow {
     sex_correction_plot = preprocessing.out.plot
     adata_clean = umap.out.h5ad
     adata_cell_type_subset = subsetting_2.out
-    // scvi_model = scvi.out
+    scvi_model = scvi.out
     mrvi_model = mrvi.out
     mrvi_adata = umap_after_batch_cor.out
     umap_after_bc = umap_plot.out
-    /*da_results = differential_abundance_calc.out
+    da_results = differential_abundance_calc.out
     da_plot = differential_abundance_plot.out
-    deg_results = differential_expression_calc.out*/
+    deg_results = differential_expression_calc.out
 
 }
 
@@ -113,9 +113,9 @@ output {
         path { "../data" }
     }
 
-    // scvi_model {
-    //     path { "./models" }
-    // }
+    scvi_model {
+        path { "./models" }
+    }
 
     mrvi_model {
         path { "./models" }
@@ -128,7 +128,7 @@ output {
     umap_after_bc {
         path { "./plots" }
     }
-/*
+
     da_results {
         path { "./tables" }
     }
@@ -140,6 +140,6 @@ output {
     deg_results {
         path { "../data" }
     }
-*/
+
 
 }

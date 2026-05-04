@@ -31,6 +31,7 @@ import xarray as xr
 # Hardware Setup
 # torch.set_float32_matmul_precision('high')
 
+
 # 1. Configuration
 # We pull the path from the Bash variable
 input_file = os.environ.get('DATA_PATH')
@@ -43,12 +44,17 @@ adata = sc.read_h5ad("${input_adata}")
 model_mrvi = MRVI.load("${input_model}", adata=adata) #final mrvi model from job 171, sample_key = sample_ID, batch_key = donor
 adata
 
+
+
+current_categories = model_mrvi.sample_info["donor_disease_category"].cat.categories.tolist()
+print(current_categories)
 print("Reordering covariate keys...")
 
 
 sample_cov_keys = adata.obs["donor_disease_category"]
 model_mrvi.sample_info["donor_disease_category"] = model_mrvi.sample_info["donor_disease_category"].cat.reorder_categories(
-    ['healthy_control', 'pediatric_healthy_control', 'CD_control', 'CD_disease', 'UC_control', 'UC_disease', 'PIBD_disease']
+    ['healthy_control', 'pediatric_healthy_control', 'PIBD_disease', 'UC_control', 'UC_disease']
+
 )
 
 print(f"Starting deg calcultation for {adata.n_obs} cells...")
