@@ -51,7 +51,6 @@ workflow {
     // output_ch = channel.of(output_array)
     scvi(sample_qc.out, params.batch, "scvi_model_${params.cell_type}")
     mrvi(sample_qc.out, params.batch, params.cov_of_interest, "mrvi_model_${params.cell_type}")
-    bases_array = ['unintegrated', 'scvi', 'mrvi_u', 'mrvi_z']
     umap_after_batch_cor(mrvi.out, scvi.out, subsetting_2.out, "adata_all_batch_${params.cell_type}.h5ad")
     bases_ch = channel.of('unintegrated', 'scvi', 'mrvi_u', 'mrvi_z').view()
     plot_inputs = umap_after_batch_cor.out.combine(bases_ch)
@@ -140,7 +139,7 @@ output {
     }
 
     deg_results {
-        path { "../data" }
+        path { "/mnt/data/melina" }
     }
 
 
