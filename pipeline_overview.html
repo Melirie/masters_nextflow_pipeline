@@ -65,6 +65,8 @@ flowchart TB
     v48["output_file"]
     v51["comparison_key"]
     v52["output_file"]
+    v55["output_plot"]
+    v56["output_table"]
     end
     v2(["load_data"])
     v7(["subsetting_1"])
@@ -76,6 +78,8 @@ flowchart TB
     v43[" "]
     v50[" "]
     v54[" "]
+    v58[" "]
+    v59[" "]
     end
     v13(["qc_plot"])
     v16(["normalization"])
@@ -91,6 +95,7 @@ flowchart TB
     v46(["differential_abundance_calc"])
     v49(["differential_abundance_plot"])
     v53(["differential_expression_calc"])
+    v57(["benchmarking"])
     v40(( ))
     v0 --> v2
     v1 --> v2
@@ -138,6 +143,7 @@ flowchart TB
     v38 --> v46
     v38 --> v49
     v38 --> v53
+    v38 --> v57
     v38 --> v40
     v39 --> v40
     v40 --> v42
@@ -151,6 +157,10 @@ flowchart TB
     v51 --> v53
     v52 --> v53
     v53 --> v54
+    v55 --> v57
+    v56 --> v57
+    v57 --> v59
+    v57 --> v58
 
 </pre>
 <script type="module">

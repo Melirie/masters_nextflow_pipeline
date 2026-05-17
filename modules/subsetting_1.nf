@@ -28,39 +28,39 @@ categories = '${str_cat}'.split(',')
 diseases   = '${str_dis}'.split(',')
 organs     = '${str_org}'.split(',')
 
+# Clean up steps
 
-# 1. Clear Pairwise Matrices
+# Clear Pairwise Matrices
 if hasattr(adata, 'obsp'):
     for key in list(adata.obsp.keys()):
         del adata.obsp[key]
 
-# 2. Clear Metadata
+# Clear Metadata
 for key in ['neighbors', 'umap', 'leiden']:
     if key in adata.uns:
         del adata.uns[key]
 
-# Specifically target the old embeddings
+# Clear old embeddings
 for key in ['X_scANVI', 'X_umap']:
     if key in adata.obsm:
         del adata.obsm[key]
 
-# Specifically targets old uns that are not needed anymore
+# Clear old uns that are not needed anymore
 stale_keys = ['neighbors', 'umap', 'leiden', 'pca', 'log1p']
 for key in stale_keys:
     if key in adata.uns:
         del adata.uns[key]
 
-# Break View if necessary
-adata = adata.copy()
+#adata = adata.copy() # Breaking the view, had issues here before but maybe check if still necessary
 
-# Subsetting
-
-# Select conditions, donor category (excluding fetal tissue), organ groups
+# Subsetting for groups defined in the params
+# Select conditions: Diseases, Donor Category (for excluding fetal tissue), Organ Groups
 keep_cells = (adata.obs['donor_disease'].isin(diseases)) & \
              (adata.obs['donor_category'].isin(categories)) & \
              (adata.obs['organ_groups'].isin(organs))
 
-adata = adata[keep_cells].copy()
+#adata = adata[keep_cells].copy()
+adata = adata[keep_cells]
 
 adata.write_h5ad('${output_file}', compression=None)
 "

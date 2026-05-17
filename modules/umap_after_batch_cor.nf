@@ -7,7 +7,7 @@ process umap_after_batch_cor {
 
     output:
     path "${output_file}"
-
+    
     script:
     """
     python3 <<-END_PYTHON
@@ -37,10 +37,12 @@ del adata.obsm["X_umap"]
 model_mrvi = MRVI.load("${input_model_mrvi}", adata=adata)
 adata.obsm[f"X_mrvi_u"] = model_mrvi.get_latent_representation()
 adata.obsm[f"X_mrvi_z"] = model_mrvi.get_latent_representation(give_z=True)
+
 sc.pp.neighbors(adata, use_rep=f"X_mrvi_u", key_added=f"neighbors_mrvi_u")
 sc.tl.umap(adata, neighbors_key=f"neighbors_mrvi_u")
 adata.obsm[f"X_umap_mrvi_u"] = adata.obsm["X_umap"].copy()
 del adata.obsm["X_umap"]
+
 sc.pp.neighbors(adata, use_rep=f"X_mrvi_z", key_added=f"neighbors_mrvi_z")
 sc.tl.umap(adata, neighbors_key=f"neighbors_mrvi_z")
 adata.obsm[f"X_umap_mrvi_z"] = adata.obsm["X_umap"].copy()

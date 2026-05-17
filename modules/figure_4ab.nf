@@ -1,4 +1,4 @@
-process umap_plot {
+process figure_4ab {
     input:
     tuple path(adata), val(base)
 
@@ -18,8 +18,8 @@ import math
 adata = sc.read_h5ad('${adata}')
 
 # 2. Configuration
-plot_columns = ['level_1_annot', 'level_2_annot', 'level_3_annot', 'study', 
-                'donor_disease_category', 'organ_groups', 'sample_retrieval', 'assay']
+# Fixed: Ensured this is a list to avoid the 'KeyError: l' string iteration error
+plot_columns = ['study', 'donor_disease_category']
 
 current_basis = "umap_${base}"
 output_filename = "umap_${base}_${params.cell_type}.pdf"
@@ -38,7 +38,12 @@ with PdfPages(output_filename) as pdf:
     for p in range(num_pages):
         # Initialize A4 Figure
         fig, axes = plt.subplots(ROWS_PER_PAGE, COLS_PER_PAGE, figsize=(A4_WIDTH, A4_HEIGHT))
-        axes_flat = axes.flatten()
+        
+        # Handle case where subplots might not be a 2D array if ROWS=1, COLS=1
+        if PLOTS_PER_PAGE > 1:
+            axes_flat = axes.flatten()
+        else:
+            axes_flat = [axes]
         
         # Determine columns for this specific page
         start_idx = p * PLOTS_PER_PAGE
@@ -48,23 +53,27 @@ with PdfPages(output_filename) as pdf:
             ax = axes_flat[i]
             
             # Use Scanpy to plot onto the specific axis
+            # legend_loc=None prevents Scanpy from drawing a duplicate legend
             sc.pl.embedding(
                 adata, 
                 basis=current_basis, 
                 color=col, 
                 ax=ax, 
                 show=False,
+                legend_loc=None,
                 title=f"{col}_${base}"
             )
             
-            # Shrink and position the legend
-            # bbox_to_anchor puts the legend to the right of the plot
-            leg = ax.legend(
-                loc='best',
-                bbox_to_anchor=(0.5, 0., 0.5, 0.5),
-                fontsize='xx-small', 
+            # Position the legend to the right of the axis (outside the plot)
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(
+                handles, 
+                labels,
+                loc='upper left',
+                bbox_to_anchor=(1.02, 1),
+                fontsize='5', 
                 frameon=False,
-                markerscale=0.4
+                markerscale=0.5
             )
             
             # Clean up plot aesthetics
@@ -76,8 +85,8 @@ with PdfPages(output_filename) as pdf:
         for j in range(len(page_columns), PLOTS_PER_PAGE):
             axes_flat[j].axis('off')
 
-        # Adjust layout to prevent overlap
-        plt.tight_layout()
+        # Use rect to ensure tight_layout makes room for the legends on the right
+        plt.tight_layout(rect=[0, 0, 0.9, 1])
         
         pdf.savefig(fig)
         plt.close(fig)

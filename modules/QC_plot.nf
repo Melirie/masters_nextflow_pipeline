@@ -1,10 +1,10 @@
 process qc_plot {
+    
     input:
     path input_file
-    val output_plot
 
     output:
-    path "${output_plot}"
+    path "${input_file.baseName}_qc.png"
 
     script:
     """
@@ -27,7 +27,7 @@ with plt.rc_context({'figure.figsize': (12, 8)}):
         show=False
     )
     # Customize the layout if needed
-    plt.savefig('${output_plot}', bbox_inches='tight')
+    plt.savefig('${input_file.baseName}_qc.png', bbox_inches='tight')
     plt.close()
 
 END_PYTHON

@@ -26,16 +26,12 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 
-
-
-# 1. Configuration
-# We pull the path from the Bash variable
-input_file = os.environ.get('DATA_PATH')
+scvi.settings.seed = 0
 
 # 1. Load your "Fresh" data
 adata = sc.read_h5ad("${input_adata}")
 
-# 2. Load Model C
+# 2. Load Model
 model_mrvi = MRVI.load("${input_model}", adata=adata)
 adata
 
@@ -45,7 +41,7 @@ print(f"Starting differential abundance calcultation for {adata.n_obs} cells..."
 de_results = model_mrvi.differential_abundance(
     adata=adata,                       
     sample_cov_keys=["${comparison_key}"], 
-    batch_size=512,
+    batch_size=1024,
     compute_log_enrichment=True
 )
 
@@ -62,7 +58,7 @@ for var in de_results.data_vars:
         de_results[var] = de_results[var].astype(str)
 
 
-# 3. Save the xarray Dataset
+# 3. Save the xarray dataset
 de_results.to_netcdf("${output_file}")
 print(f"Results successfully saved")
 

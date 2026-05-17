@@ -24,6 +24,7 @@ import pandas as pd
 
 # Hardware Setup
 torch.set_float32_matmul_precision('high')
+scvi.settings.seed = 0
 
 adata = sc.read_h5ad("${input_file}")
 

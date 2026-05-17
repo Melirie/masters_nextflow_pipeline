@@ -26,6 +26,7 @@ import pandas as pd
 
 # Hardware Setup
 torch.set_float32_matmul_precision('high')
+scvi.settings.seed = 0
 
 config = {
     "batch_size": 1024,

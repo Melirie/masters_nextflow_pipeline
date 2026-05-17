@@ -24,40 +24,21 @@ from pandas.api.types import CategoricalDtype
 adata = sc.read_h5ad("${input_file}")
 
 # Raw counts handling
-adata.layers["counts"] = adata.raw.X.copy()
-adata.X = adata.raw[:, adata.var_names].X.copy()
-sc.pp.filter_genes(adata, min_counts=5)
-adata.raw = adata  # Update raw to match filtered genes
+adata = adata.raw.to_adata().copy()
 adata.layers["counts"] = adata.X.copy()
 
-
-# --- DEBUGGING: Check what your data looks like ---
-print("First 10 genes in your data:")
-print(adata.var_names[:10].tolist())
-
-adata.var_names_make_unique()
-if 'gene_symbols' in adata.var.columns:
-    adata.var.index = adata.var['gene_symbols']
-else:
-    print("Warning: 'gene_symbols' column not found, using existing index.")
-
+# Filter genes that are expressed in less than 10 cells
+sc.pp.filter_genes(adata, min_counts=10)
 
 # Define Sex genes
 SEX_GENES = ['XIST', 'RPS4Y1', 'EIF1AY', 'DDX3Y']
 
-# 2. Cleanup Stale Data
 for key in ['neighbors', 'umap', 'leiden', 'pca', 'log1p']:
     adata.uns.pop(key, None)
 for key in ['X_scANVI', 'X_umap']:
     adata.obsm.pop(key, None)
 adata.obsp.clear()
 adata = adata.copy()
-
-# 3. Subset Data
-keep_cells = (adata.obs["donor_disease"].isin(["control","organ_donor","CD","UC","PIBD"])) & \
-             (adata.obs["donor_category"].isin(["control","disease"])) & \
-             (adata.obs["organ_groups"].isin(["Small_intestine","Large_intestine"]))
-adata = adata[keep_cells].copy()
 
 # 4. Metadata Fixes (Age & Donor IDs)
 adata.obs.loc[adata.obs["donorID_unified"].isin(["D143", "D144", "D145"]), "age_unified"] = "47-80"
@@ -74,11 +55,6 @@ adata.obs["donorID_unified"] = adata.obs["donorID_unified"].cat.remove_unused_ca
 age_order = ["0-3", "4-7", "9-12", "13-17", "18-34", "35-54", "47-80", "55-74", "75+"]
 adata.obs["age_unified"] = adata.obs["age_unified"].astype(CategoricalDtype(categories=age_order, ordered=True))
 adata.obs.loc[adata.obs["donorID_unified"] == "D146B", "age_unified"] = "0-3"
-
-print("Check old disease categories:")
-print(adata.obs['donor_disease'].value_counts())
-print(adata.obs['donor_category'].value_counts())
-
 
 # 5. Disease Category
 # Create the combined column as a string first
@@ -113,9 +89,6 @@ mask = (
 
 adata.obs.loc[mask, 'donor_disease_category'] = 'pediatric_healthy_control'
 
-# Verify
-print("New category distribution:")
-print(adata.obs['donor_disease_category'].value_counts())
 
 # 8. Gene Indexing
 adata.var.index = adata.var['gene_symbols']

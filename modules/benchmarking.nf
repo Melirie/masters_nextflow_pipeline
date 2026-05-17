@@ -1,12 +1,11 @@
-process kbet {
+process benchmarking {
     input:
-    path input_model
     path input_adata
-    val batch_key
-    val output_file
+    val output_plot
 
     output:
-    path "${output_file}"
+    path "*.svg", emit: plot_dir
+    path "benchmarking_results.csv", emit: table
 
     script:
 
@@ -15,100 +14,44 @@ process kbet {
     
     python3 <<-END_PYTHON
 
-import scib_metrics
+import numpy as np
+import scanpy as sc
+import pandas as pd
 
-batch_vector = adata.obs['${batch_key}'].values
-results = scib_metrics.kbet(X, batches=batch_vector, alpha=0.05)
+from scib_metrics.benchmark import Benchmarker, BioConservation, BatchCorrection
 
+adata = sc.read_h5ad("${input_adata}")
 
+import time
 
-END_PYTHON
-    """
-}
+distance_keys = [
+    "unintegrated_distances", 
+    "neighbors_scvi_distances", 
+    "neighbors_mrvi_u_distances", 
+    "neighbors_mrvi_z_distances"
+]
 
+biocons = BioConservation(isolated_labels=True)
 
-process silhouette_batch {
-    input:
-    path input_model
-    path input_adata
-    val batch_key
-    val output_file
+start = time.time()
+bm = Benchmarker(
+    adata,
+    batch_key="donorID_unified",
+    label_key="level_3_annot",
+    embedding_obsm_keys=["X_pca", "X_scvi", "X_mrvi_u", "X_mrvi_z"],
+    pre_integrated_embedding_obsm_key="X_pca",
+    bio_conservation_metrics=biocons,
+    batch_correction_metrics=BatchCorrection(),
+    n_jobs=-1,
+)
 
-    output:
-    path "${output_file}"
+bm.benchmark()
+end = time.time()
+print(f"Time: {int((end - start) / 60)} min {int((end - start) % 60)} sec")
 
-    script:
-
-
-    """
-    
-    python3 <<-END_PYTHON
-
-import scib_metrics
-
-batch_vector = adata.obs['${batch_key}'].values
-results = scib_metrics.kbet(X, batches=batch_vector, alpha=0.05)
-
-
-
-END_PYTHON
-    """
-}
-
-
-
-process iLISI {
-    input:
-    path input_model
-    path input_adata
-    val batch_key
-    val output_file
-
-    output:
-    path "${output_file}"
-
-    script:
-
-
-    """
-    
-    python3 <<-END_PYTHON
-
-import scib_metrics
-
-batch_vector = adata.obs['${batch_key}'].values
-results = scib_metrics.kbet(X, batches=batch_vector, alpha=0.05)
-
-
-
-END_PYTHON
-    """
-}
-
-
-process PCR_comparison {
-    input:
-    path input_model
-    path input_adata
-    val batch_key
-    val output_file
-
-    output:
-    path "${output_file}"
-
-    script:
-
-
-    """
-    
-    python3 <<-END_PYTHON
-
-import scib_metrics
-
-batch_vector = adata.obs['${batch_key}'].values
-results = scib_metrics.kbet(X, batches=batch_vector, alpha=0.05)
-
-
+bm.plot_results_table(save_dir = ".")
+df = bm.get_results(min_max_scale=False)
+df.to_csv("benchmarking_results.csv")
 
 END_PYTHON
     """
