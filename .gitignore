@@ -17,6 +17,8 @@
 !results/
 !results/plots/
 !results/plots/**
+!final_plots/
+!final_plots/**
 
 # 4. Specifically ensure heavy/system stuff stays ignored 
 # (Even if they accidentally match an exception above)
